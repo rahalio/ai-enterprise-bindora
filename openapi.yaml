@@ -1,0 +1,758 @@
+openapi: 3.0.3
+info:
+  title: Bindora
+  version: 0.1.0
+  description: >-
+    Insurance digital-ready control plane governing API-led SOE to SOR connections,
+    canonical contracts, factory delivery waves, security gates, and partner/tenant
+    composition for carriers and BPaaS platforms.
+  x-product-slug: ai-enterprise-bindora
+  x-source: ai-in-enterprise/Deloitte_Framework-Mulesoft_Digital Ready Framework_0/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Catalog
+    description: Business capabilities and API catalog
+  - name: Bindings
+    description: SOE and SOR authoritative bindings
+  - name: Contracts
+    description: Canonical entities and field mappings
+  - name: Factory
+    description: Factory delivery waves
+  - name: Gates
+    description: Security and go-live gates
+  - name: Tenants
+    description: Partner and BPaaS tenant partitions
+  - name: Governance
+    description: Exceptions, SLA classes, and glossary links
+paths:
+  /v1/capabilities:
+    get:
+      operationId: listCapabilities
+      tags: [Catalog]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: domain
+          in: query
+          schema:
+            type: string
+            enum: [policy_admin, billing, claims, agent_management, underwriting, correspondence]
+      responses:
+        "200":
+          description: Capabilities page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeBusinessCapability" }
+    post:
+      operationId: createCapability
+      tags: [Catalog]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessCapability" }
+      responses:
+        "201":
+          description: Capability created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeBusinessCapability" }
+  /v1/api-contracts:
+    get:
+      operationId: listApiContracts
+      tags: [Catalog]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      parameters:
+        - name: capabilityId
+          in: query
+          schema: { type: string }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: API contracts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeApiContract" }
+    post:
+      operationId: createApiContract
+      tags: [Catalog]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApiContract" }
+      responses:
+        "201":
+          description: Contract created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeApiContract" }
+  /v1/api-contracts/{contractId}/versions:
+    parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: publishApiVersion
+      tags: [Catalog]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApiVersion" }
+      responses:
+        "201":
+          description: Version published
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeApiVersion" }
+        "409":
+          description: Security or mapping gate failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /v1/bindings:
+    get:
+      operationId: listBindings
+      tags: [Bindings]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: entity
+          in: query
+          schema: { type: string, enum: [policy, billing, claim, party, agent] }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: SOE/SOR bindings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeSystemBinding" }
+    post:
+      operationId: upsertBinding
+      tags: [Bindings]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SystemBinding" }
+      responses:
+        "200":
+          description: Binding upserted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeSystemBinding" }
+  /v1/canonical-entities:
+    get:
+      operationId: listCanonicalEntities
+      tags: [Contracts]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Canonical entities
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeCanonicalEntity" }
+    post:
+      operationId: createCanonicalEntity
+      tags: [Contracts]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CanonicalEntity" }
+      responses:
+        "201":
+          description: Canonical entity created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeCanonicalEntity" }
+  /v1/field-mappings:
+    post:
+      operationId: approveFieldMapping
+      tags: [Contracts]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FieldMapping" }
+      responses:
+        "200":
+          description: Mapping approved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeFieldMapping" }
+  /v1/factory-waves:
+    get:
+      operationId: listFactoryWaves
+      tags: [Factory]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Factory waves
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeFactoryWave" }
+    post:
+      operationId: createFactoryWave
+      tags: [Factory]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FactoryWave" }
+      responses:
+        "201":
+          description: Wave created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeFactoryWave" }
+  /v1/factory-waves/{waveId}/advance:
+    parameters:
+      - name: waveId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: advanceFactoryWave
+      tags: [Factory]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Wave advanced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeFactoryWave" }
+  /v1/gates/security-check:
+    post:
+      operationId: runSecurityGate
+      tags: [Gates]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [apiVersionId]
+              properties:
+                apiVersionId: { type: string }
+      responses:
+        "200":
+          description: Security gate result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeSecurityPolicyBinding" }
+        "409":
+          description: Gate failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /v1/gates/go-live:
+    post:
+      operationId: evaluateGoLiveGate
+      tags: [Gates]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoLiveGate" }
+      responses:
+        "200":
+          description: Go-live allowed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeGoLiveGate" }
+        "409":
+          description: Go-live blocked - missing APIs or SLA
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /v1/tenants:
+    get:
+      operationId: listTenants
+      tags: [Tenants]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Partner/BPaaS tenants
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopePartnerTenant" }
+    post:
+      operationId: createTenant
+      tags: [Tenants]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PartnerTenant" }
+      responses:
+        "201":
+          description: Tenant created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopePartnerTenant" }
+  /v1/exceptions/point-to-point:
+    get:
+      operationId: listPointToPointExceptions
+      tags: [Governance]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Point-to-point debt
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopePointToPointException" }
+    post:
+      operationId: grantPointToPointException
+      tags: [Governance]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PointToPointException" }
+      responses:
+        "201":
+          description: Exception granted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopePointToPointException" }
+  /v1/sla-classes:
+    get:
+      operationId: listSlaClasses
+      tags: [Governance]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: SLA classes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeSlaClass" }
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+
+  schemas:
+
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+
+    BusinessCapability:
+      type: object
+      required: [id, name, domain]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        domain: { type: string, enum: [policy_admin, billing, claims, agent_management, underwriting, correspondence] }
+        description: { type: string }
+    ApiContract:
+      type: object
+      required: [id, capabilityId, name, interactionMode]
+      properties:
+        id: { type: string }
+        capabilityId: { type: string }
+        name: { type: string }
+        interactionMode: { type: string, enum: [real_time, batch_exception] }
+        owner: { type: string }
+    ApiVersion:
+      type: object
+      required: [id, contractId, version, status]
+      properties:
+        id: { type: string }
+        contractId: { type: string }
+        version: { type: string }
+        status: { type: string, enum: [draft, published, retired] }
+        openapiArtifactUri: { type: string, format: uri }
+    SystemBinding:
+      type: object
+      required: [id, businessEntity, soeSystemId, sorSystemId, authoritativeWriter]
+      properties:
+        id: { type: string }
+        businessEntity: { type: string, enum: [policy, billing, claim, party, agent] }
+        soeSystemId: { type: string }
+        sorSystemId: { type: string }
+        authoritativeWriter: { type: string, enum: [sor, soe_via_api] }
+    CanonicalEntity:
+      type: object
+      required: [id, name, standardRef]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        standardRef: { type: string, description: "Industry canonical where applicable" }
+    FieldMapping:
+      type: object
+      required: [id, canonicalEntityId, sourceField, targetField, status]
+      properties:
+        id: { type: string }
+        canonicalEntityId: { type: string }
+        sourceField: { type: string }
+        targetField: { type: string }
+        status: { type: string, enum: [proposed, approved, rejected] }
+        approvedBy: { type: string }
+    FactoryWave:
+      type: object
+      required: [id, name, phase, status]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        phase: { type: string, enum: [installation_governance, frameworks_development, factory_delivery] }
+        status: { type: string, enum: [planned, active, completed] }
+        prioritizationFactor: { type: string, enum: [growth, maturity, dependencies, continuity] }
+    SecurityPolicyBinding:
+      type: object
+      required: [id, apiVersionId, gatewayPolicy, vaultBound, status]
+      properties:
+        id: { type: string }
+        apiVersionId: { type: string }
+        gatewayPolicy: { type: string }
+        vaultBound: { type: boolean }
+        status: { type: string, enum: [pass, fail] }
+    GoLiveGate:
+      type: object
+      required: [id, channelFeature, requiredApiIds, status]
+      properties:
+        id: { type: string }
+        channelFeature: { type: string }
+        requiredApiIds:
+          type: array
+          items: { type: string }
+        status: { type: string, enum: [allowed, blocked] }
+        blockedReason: { type: string }
+    PartnerTenant:
+      type: object
+      required: [id, name, partitionKey]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        partitionKey: { type: string }
+        allowedCapabilityIds:
+          type: array
+          items: { type: string }
+    PointToPointException:
+      type: object
+      required: [id, description, retirementDueAt, status]
+      properties:
+        id: { type: string }
+        description: { type: string }
+        retirementDueAt: { type: string, format: date-time }
+        status: { type: string, enum: [active, retired, overdue] }
+        replacedByApiId: { type: string }
+    SlaClass:
+      type: object
+      required: [id, name, availabilityPercent, realtimeRequired]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        availabilityPercent: { type: number, format: double, example: 99.9 }
+        realtimeRequired: { type: boolean }
+        support247: { type: boolean }
+
+    DataEnvelopeBusinessCapability:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/BusinessCapability" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeBusinessCapability:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/BusinessCapability" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeApiContract:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ApiContract" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeApiContract:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ApiContract" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeApiVersion:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ApiVersion" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeApiVersion:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ApiVersion" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeSystemBinding:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/SystemBinding" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeSystemBinding:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/SystemBinding" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeCanonicalEntity:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/CanonicalEntity" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeCanonicalEntity:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/CanonicalEntity" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeFieldMapping:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/FieldMapping" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeFieldMapping:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/FieldMapping" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeFactoryWave:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/FactoryWave" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeFactoryWave:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/FactoryWave" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeSecurityPolicyBinding:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/SecurityPolicyBinding" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeSecurityPolicyBinding:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/SecurityPolicyBinding" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeGoLiveGate:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/GoLiveGate" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeGoLiveGate:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/GoLiveGate" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopePartnerTenant:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/PartnerTenant" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopePartnerTenant:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/PartnerTenant" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopePointToPointException:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/PointToPointException" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopePointToPointException:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/PointToPointException" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeSlaClass:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/SlaClass" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeSlaClass:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/SlaClass" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
